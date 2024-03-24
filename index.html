@@ -106,7 +106,8 @@
             text: 'Main Button'
         });
         Telegram.WebApp.MainButton.onClick(function () {
-            Telegram.WebApp.showAlert(WebApp.WebAppUser.username)
+            console.log(WebApp.WebAppUser)
+            Telegram.WebApp.showAlert('Test')
         });	
         Telegram.WebApp.MainButton.show();
 

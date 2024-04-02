@@ -44,23 +44,11 @@
     <div id="viewport-params-size"></div>
     <div id="viewport-params-expand"></div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script>
-        // Telegram Login Widget initialization
-        Telegram.Auth.init({
-            bot_id: '6653411243:AAGo0SerH6Il3uRCUfV3qWTuw8cPQCz72Fs', // Replace with your bot ID
-            locale: 'en', // Language code, e.g., 'en', 'es', 'ru', etc.
-            size: 'large', // Size of the widget: 'large' or 'small'
-            onAuth: function (user) {
-                // Callback function when authentication is successful
-                console.log('Authentication successful:', user);
-                // You can perform further actions here, such as redirecting the user or displaying a welcome message.
-            },
-            onError: function (error) {
-                // Callback function when an error occurs during authentication
-                console.error('Authentication error:', error);
-            }
-        });
-        Telegram.Auth.insertWidget('telegram-login'); // Inserting the widget into the specified div
+    <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="expandas_testBot" data-size="large" data-onauth="onTelegramAuth(user)" data-request-access="write"></script>
+    <script type="text/javascript">
+      function onTelegramAuth(user) {
+        alert('Logged in as ' + user.first_name + ' ' + user.last_name + ' (' + user.id + (user.username ? ', @' + user.username : '') + ')');
+      }
     </script>
 
     <!-- Eruda is console for mobile browsers -->

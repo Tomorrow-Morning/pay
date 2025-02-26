@@ -1,58 +1,90 @@
+<!-- 
+  A minimal HTML page demonstrating a Telegram Mini (Web) App.
+  This page shows how to access user information and control 
+  some basic features of the Telegram Web App SDK.
+  
+  IMPORTANT: 
+  1) Host this code on a secure (HTTPS) server for it to work properly in Telegram. 
+  2) Configure your bot settings to include this URL as a WebApp URL.
+-->
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Telegram Mini Apps Vanilla JS Sample App</title>
-    <style>
-        /* Your existing styles */
-    </style>
+  <!-- The title of the page -->
+  <title>Telegram Mini App Example</title>
 </head>
-
 <body>
-    <main>
-        <!-- Telegram Login Widget -->
-        <div id="telegram-login"></div>
-        
-        <!-- Rest of your content -->
-        <div align="center">
-            <a href="https://ton.org/"><img width="48" src="./assets/tapps.png" alt="logo of telegram web apps"></a>
-        </div>
-        <h1>Modals</h1>
-        <button onclick="Telegram.WebApp.showAlert('Hello World!');">Launch Alert</button>
-        <button onclick="showPopup();">Launch Popup</button>
+  <!-- A simple heading to identify our page -->
+  <h1>Telegram Mini App Demo</h1>
+  
+  <!-- A section where we'll display the user info -->
+  <div id="user-info" style="white-space: pre-wrap; margin-bottom: 20px;">
+    <!-- The user info will be shown here -->
+  </div>
 
-        <h1>Links</h1>
-        <ul>
-            <li>
-                <a href="javascript:Telegram.WebApp.openTelegramLink('https://t.me/trendingapps');">Open link within Telegram</a>
-            </li>
-            <li>
-                <a href="javascript:Telegram.WebApp.openLink('https://ton.org/');">Open link in external browser</a>
-            </li>
-            <li>
-                <a href="javascript:Telegram.WebApp.openLink('https://telegra.ph/api',{try_instant_view:true});">Open link inside Telegram webview</a>
-            </li>
-        </ul>
+  <!-- A button to test sending data back to the bot -->
+  <button id="send-data-button">Send Data to Bot</button>
 
-        <h1>Buttons</h1>
-        <button onclick="Telegram.WebApp.expand();">Expand Webview</button>
-        <button onclick="toggleMainButton();">Toggle Main Button</button>
-    </main>
-    <div id="viewport"></div>
-    <div id="viewport-params-size"></div>
-    <div id="viewport-params-expand"></div>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="expandas_testBot" data-size="large" data-onauth="onTelegramAuth(user)" data-request-access="write"></script>
-    <script type="text/javascript">
-      function onTelegramAuth(user) {
-        alert('Logged in as ' + user.first_name + ' ' + user.last_name + ' (' + user.id + (user.username ? ', @' + user.username : '') + ')');
+  <!-- 
+    Load Telegram WebApp JavaScript file. 
+    This script should be available in the global scope as "Telegram.WebApp".
+  -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // Initialize the Telegram Web App object to use its functionalities
+    const tg = window.Telegram.WebApp;
+
+    // This function logs all available data about the current user.
+    function displayUserInfo() {
+      // "tg.initDataUnsafe" contains the init data parsed as an object
+      // "tg.initDataUnsafe.user" contains the user object if available
+      const user = tg.initDataUnsafe.user;
+
+      // Let's prepare a string to show the user object or a message if not found
+      let userInfoText = 'No user information available';
+      if (user) {
+        // We'll format the user data as JSON so it's easier to read
+        userInfoText = JSON.stringify(user, null, 2);
       }
-    </script>
 
-    <!-- Eruda is console for mobile browsers -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
+      // Place the user info inside our "user-info" div
+      document.getElementById('user-info').textContent = userInfoText;
+    }
+
+    // This function demonstrates how to send data back to the bot
+    function sendDataToBot() {
+      // "sendData" can send a string to your bot immediately
+      // The bot will receive it via the "web_app_data" update
+      tg.sendData('This is data from the WebApp');
+    }
+
+    // A function to set up the main button and the event handlers
+    function configureWebAppFeatures() {
+      // Show the main button with a custom label
+      tg.MainButton.setText('Main Button');
+      tg.MainButton.show();
+
+      // You can also set a custom color for the main button if you like
+      // tg.MainButton.setParams({color: '#ff0000'});
+
+      // Listen for clicks on the main button
+      tg.onEvent('mainButtonClicked', () => {
+        // On click, we can send data to bot or do other logic
+        tg.sendData('Main button was clicked');
+      });
+
+      // Adjust the background color of the app to match Telegram theme
+      // This will automatically match dark or light mode
+      tg.expand();
+    }
+
+    // Connect our "Send Data" button to the "sendDataToBot" function
+    document.getElementById('send-data-button').addEventListener('click', sendDataToBot);
+
+    // --- Initialize on page load ---
+    displayUserInfo();       // Show user information
+    configureWebAppFeatures(); // Set up Telegram Web App features
+  </script>
 </body>
 </html>

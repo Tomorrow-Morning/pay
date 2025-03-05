@@ -1,53 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>Telegram Mini App Advanced Demo</title>
   <meta charset="UTF-8" />
-  <title>Telegram Mini-App Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    button {
+      margin-bottom: 10px;
+      display: block;
+    }
+    #user-info {
+      white-space: pre-wrap; 
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      padding: 10px;
+    }
+  </style>
 </head>
 <body>
+  <h1>Telegram Mini App Advanced Demo</h1>
 
-  <h1>Welcome!</h1>
-  <p id="info"></p>
+  <!-- Displays user info from the Telegram Mini App -->
+  <div id="user-info"></div>
 
-  <!-- Container for the Telegram login widget -->
-  <div id="telegram-login-container"></div>
+  <!-- Basic demo: send data to the bot -->
+  <button id="send-data-button">Send Data to Bot</button>
 
+  <!-- Additional features -->
+  <button id="toggle-back-button">Toggle Back Button</button>
+  <button id="show-alert-button">Show Alert</button>
+  <button id="open-link-button">Open External Link</button>
+  <button id="check-theme-button">Check Current Theme</button>
+  <button id="close-webapp-button">Close WebApp</button>
+
+  <!-- Telegram Web App script -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    // Basic check of the User-Agent string to detect Telegram in-app browser
-    const isInTelegram = /Telegram/i.test(navigator.userAgent);
+    const tg = window.Telegram.WebApp;
 
-    const infoElement = document.getElementById('info');
-
-    if (isInTelegram) {
-      // If opened inside Telegram, skip asking for Telegram login
-      infoElement.textContent = 'You are inside the Telegram app — no need to log in again.';
-    } else {
-      // If opened in a regular browser, ask the user to log in via Telegram
-      infoElement.textContent = 'Please log in with Telegram to continue.';
-
-      // Create the Telegram widget script
-      (function() {
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = 'https://telegram.org/js/telegram-widget.js?14';
-        // Replace "YOUR_BOT_NAME" with your actual bot name
-        script.setAttribute('data-telegram-login', 'YOUR_BOT_NAME');
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-        // data-request-access can be 'write' or other scopes
-        script.setAttribute('data-request-access', 'write');
-        document.getElementById('telegram-login-container').appendChild(script);
-      })();
+    // 1) Display user info
+    function displayUserInfo() {
+      const user = tg.initDataUnsafe?.user;
+      let userInfoText = 'No user information available';
+      if (user) {
+        userInfoText = JSON.stringify(user, null, 2);
+      }
+      document.getElementById('user-info').textContent = userInfoText;
     }
 
-    function onTelegramAuth(user) {
-      // This function is called by the Telegram widget on successful login
-      console.log('User authenticated via Telegram:', user);
-
-      // At this point, you'd typically send user info to your backend
-      // to start a session or exchange for tokens.
+    // 2) Send data back to the bot
+    function sendDataToBot() {
+      // This will be received by your bot via the "web_app_data" update
+      tg.sendData('This is data from the WebApp');
     }
+
+    // 3) Configure the main button and expand the WebApp
+    function configureWebAppFeatures() {
+      tg.MainButton.setText('Main Button');
+      tg.MainButton.show();
+
+      // Example of responding to a main button click
+      tg.onEvent('mainButtonClicked', () => {
+        tg.sendData('Main button was clicked');
+      });
+
+      // Expand to use full available screen space
+      tg.expand();
+    }
+
+    // 4) Toggle the BackButton
+    function toggleBackButton() {
+      // Show or hide the BackButton in the Telegram interface
+      if (tg.BackButton.isVisible) {
+        tg.BackButton.hide();
+      } else {
+        tg.BackButton.show();
+      }
+    }
+
+    // 5) Show a Telegram alert popup (within the Telegram app)
+    function showAlert() {
+      tg.showAlert('Hello from the WebApp!');
+    }
+
+    // 6) Open an external link in the default browser
+    function openLink() {
+      tg.openLink('https://telegram.org');
+    }
+
+    // 7) Check the current theme and log or display it
+    function checkTheme() {
+      const colorScheme = tg.colorScheme; // either 'light' or 'dark'
+      tg.showAlert(`Current theme: ${colorScheme}`);
+    }
+
+    // 8) Close the Web App
+    function closeWebApp() {
+      tg.close();
+    }
+
+    // Listen for theme changes (dark/light)
+    tg.onEvent('themeChanged', () => {
+      console.log('Theme changed to:', tg.colorScheme);
+    });
+
+    // Setup event handlers
+    document.getElementById('send-data-button').addEventListener('click', sendDataToBot);
+    document.getElementById('toggle-back-button').addEventListener('click', toggleBackButton);
+    document.getElementById('show-alert-button').addEventListener('click', showAlert);
+    document.getElementById('open-link-button').addEventListener('click', openLink);
+    document.getElementById('check-theme-button').addEventListener('click', checkTheme);
+    document.getElementById('close-webapp-button').addEventListener('click', closeWebApp);
+
+    // Initialize the app
+    displayUserInfo();
+    configureWebAppFeatures();
   </script>
-
 </body>
 </html>

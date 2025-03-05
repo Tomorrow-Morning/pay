@@ -1,126 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Telegram Mini App Advanced Demo</title>
+  <title>Telegram WebApp Data Parsing</title>
   <meta charset="UTF-8" />
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 20px;
-    }
-    button {
-      margin-bottom: 10px;
-      display: block;
-    }
-    #user-info {
-      white-space: pre-wrap; 
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      background: #f7f7f7;
-      padding: 10px;
-    }
-  </style>
 </head>
 <body>
-  <h1>Telegram Mini App Advanced Demo</h1>
+  <h1>Telegram WebApp Data Parsing Demo</h1>
+  <pre id="display"></pre>
 
-  <!-- Displays user info from the Telegram Mini App -->
-  <div id="user-info"></div>
-
-  <!-- Basic demo: send data to the bot -->
-  <button id="send-data-button">Send Data to Bot</button>
-
-  <!-- Additional features -->
-  <button id="toggle-back-button">Toggle Back Button</button>
-  <button id="show-alert-button">Show Alert</button>
-  <button id="open-link-button">Open External Link</button>
-  <button id="check-theme-button">Check Current Theme</button>
-  <button id="close-webapp-button">Close WebApp</button>
-
-  <!-- Telegram Web App script -->
-  <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init()</script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    const tg = window.Telegram.WebApp;
+    // 1) Parse standard query params from window.location.search
+    const urlSearchParams = new URLSearchParams(window.location.search);
+    // Example usage:
+    const tgWebAppStartParam = urlSearchParams.get('tgWebAppStartParam'); // e.g. "-1002491175041"
+    const tgWebAppVersion = urlSearchParams.get('tgWebAppVersion');       // e.g. "8.0"
+    // ...and so on
 
-    // 1) Display user info
-    function displayUserInfo() {
-      const user = tg.initDataUnsafe?.user;
-      let userInfoText = 'No user information available';
-      if (user) {
-        userInfoText = JSON.stringify(user, null, 2);
+    // 2) Parse hash fragment (e.g. "#tgWebAppData=...")
+    // window.location.hash might look like:
+    // "#tgWebAppData=user%3D%257B%2522id%2522%253A..."
+    // So first remove leading "#" and parse with URLSearchParams
+    const hashString = window.location.hash.replace(/^#/, '');
+    const hashParams = new URLSearchParams(hashString);
+
+    // The Telegram data is typically in "tgWebAppData"
+    const tgWebAppData = hashParams.get('tgWebAppData');
+    let parsedTelegramData = {};
+
+    if (tgWebAppData) {
+      // 3) Telegram’s data is itself URL-encoded, so decode it
+      // The decoded string may look like:
+      // "user=%7B%22id%22%3A260423037%2C%22first_name%22%3A%22Ruslan%22%2C...&chat_instance=..."
+      const decoded = decodeURIComponent(tgWebAppData);
+
+      // 4) Turn that decoded string into structured data
+      // by creating a new URLSearchParams object
+      const tgParams = new URLSearchParams(decoded);
+
+      // Example: "user" param is JSON with user info
+      const rawUserJson = tgParams.get('user');  
+      const chatInstance = tgParams.get('chat_instance');
+      const startParam = tgParams.get('start_param');
+      const authDate = tgParams.get('auth_date');
+      const signature = tgParams.get('signature');
+      const hash = tgParams.get('hash');
+
+      let userData = {};
+      if (rawUserJson) {
+        try {
+          userData = JSON.parse(rawUserJson);
+        } catch (err) {
+          console.error("Error parsing user JSON:", err);
+        }
       }
-      document.getElementById('user-info').textContent = userInfoText;
+
+      parsedTelegramData = {
+        userData,
+        chat_instance: chatInstance,
+        start_param: startParam,
+        auth_date: authDate,
+        signature,
+        hash
+      };
     }
 
-    // 2) Send data back to the bot
-    function sendDataToBot() {
-      // This will be received by your bot via the "web_app_data" update
-      tg.sendData('This is data from the WebApp');
-    }
-
-    // 3) Configure the main button and expand the WebApp
-    function configureWebAppFeatures() {
-      tg.MainButton.setText('Main Button');
-      tg.MainButton.show();
-
-      // Example of responding to a main button click
-      tg.onEvent('mainButtonClicked', () => {
-        tg.sendData('Main button was clicked');
-      });
-
-      // Expand to use full available screen space
-      tg.expand();
-    }
-
-    // 4) Toggle the BackButton
-    function toggleBackButton() {
-      // Show or hide the BackButton in the Telegram interface
-      if (tg.BackButton.isVisible) {
-        tg.BackButton.hide();
-      } else {
-        tg.BackButton.show();
-      }
-    }
-
-    // 5) Show a Telegram alert popup (within the Telegram app)
-    function showAlert() {
-      tg.showAlert('Hello from the WebApp!');
-    }
-
-    // 6) Open an external link in the default browser
-    function openLink() {
-      tg.openLink('https://telegram.org');
-    }
-
-    // 7) Check the current theme and log or display it
-    function checkTheme() {
-      const colorScheme = tg.colorScheme; // either 'light' or 'dark'
-      tg.showAlert(`Current theme: ${colorScheme}`);
-    }
-
-    // 8) Close the Web App
-    function closeWebApp() {
-      tg.close();
-    }
-
-    // Listen for theme changes (dark/light)
-    tg.onEvent('themeChanged', () => {
-      console.log('Theme changed to:', tg.colorScheme);
-    });
-
-    // Setup event handlers
-    document.getElementById('send-data-button').addEventListener('click', sendDataToBot);
-    document.getElementById('toggle-back-button').addEventListener('click', toggleBackButton);
-    document.getElementById('show-alert-button').addEventListener('click', showAlert);
-    document.getElementById('open-link-button').addEventListener('click', openLink);
-    document.getElementById('check-theme-button').addEventListener('click', checkTheme);
-    document.getElementById('close-webapp-button').addEventListener('click', closeWebApp);
-
-    // Initialize the app
-    displayUserInfo();
-    configureWebAppFeatures();
+    // Display everything in the <pre> for demonstration
+    // (In a real app, you’d handle these parameters in your logic)
+    const displayEl = document.getElementById('display');
+    displayEl.textContent = JSON.stringify({
+      queryParams: Object.fromEntries(urlSearchParams.entries()),
+      hashParams: Object.fromEntries(hashParams.entries()),
+      parsedTelegramData
+    }, null, 2);
   </script>
 </body>
 </html>
